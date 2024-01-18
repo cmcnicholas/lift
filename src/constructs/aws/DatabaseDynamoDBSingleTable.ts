@@ -1,6 +1,6 @@
 import type { Construct as CdkConstruct } from "constructs";
 import type { CfnResource } from "aws-cdk-lib";
-import { CfnOutput, Fn, Stack } from "aws-cdk-lib";
+import { CfnOutput, Fn, RemovalPolicy, Stack } from "aws-cdk-lib";
 import type { CfnTable } from "aws-cdk-lib/aws-dynamodb";
 import { AttributeType, BillingMode, StreamViewType, Table } from "aws-cdk-lib/aws-dynamodb";
 import type { FromSchema } from "json-schema-to-ts";
@@ -70,6 +70,7 @@ const DATABASE_DEFINITION = {
                 additionalProperties: false,
             },
         },
+        removalPolicy: { type: "string", enum: ["destroy", "retain"] },
     },
     additionalProperties: false,
 } as const;
@@ -80,6 +81,7 @@ const DATABASE_DEFAULTS: Required<Configuration> = {
     localSecondaryIndexes: false,
     gsiCount: 0,
     gsis: [],
+    removalPolicy: "retain",
 };
 
 export class DatabaseDynamoDBSingleTable extends AwsConstruct {
@@ -101,6 +103,8 @@ export class DatabaseDynamoDBSingleTable extends AwsConstruct {
             pointInTimeRecovery: true,
             timeToLiveAttribute: "TimeToLive",
             stream: StreamViewType.NEW_AND_OLD_IMAGES,
+            removalPolicy:
+                resolvedConfiguration.removalPolicy === "destroy" ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
         });
 
         if (resolvedConfiguration.localSecondaryIndexes) {
